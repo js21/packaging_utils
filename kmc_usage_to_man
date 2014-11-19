@@ -1,0 +1,225 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Data::Dumper;
+
+#Converts KMC usage into man pages. It's a bigger script than the man pages, but the plan is to have a future script that works for all packages
+#The man pages are placed in the man folder in the main directory of the kmc package
+
+createManPages();
+
+sub createManPages {
+
+  my $source= 'bin';
+  my $destination= 'man';
+  my $app_name = 'KMC';
+
+
+  unless ( -d $destination ) {
+    system(mkdir $destination);
+  }
+
+  my @files;
+
+  push(@files,`ls $source/kmc*`);
+
+  if ( scalar @files > 0 ) {
+
+    print "Creating manpages\n";
+    for my $file ( @files ) {
+      $file =~ s/\n$//;
+
+      my $filename = $file;
+      $filename =~ s/$source\///;
+
+      my $uc_filename = uc($filename);
+      my $man_file = $filename;
+
+      $man_file = $destination . '/' . $man_file . '.1';
+
+      my $kmc_short_description = q{count kmers in genomic sequences};
+      my $kmc_long_description = q{KMC—K-mer Counter is a utility designed for counting k-mers (sequences of consecutive k symbols) in a set of reads from genome sequencing projects.};
+
+      my $kmc_dump_short_description = q{list k-mers from kmc-generated database};
+      my $kmc_dump_long_description = q{KMC's end product is a database of k-mers stored in compact binary form. The kmc_dump program allows the production of a textual list of k-mers together with their counters for the analysis ran};
+      
+
+      my $cmd = "help2man -N -m $filename -n $filename --no-discard-stderr $file | sed 's/usage://gi'";
+      my @output;
+      push(@output, `$cmd`);
+
+      for my $line (@output) {
+	$line =~ s/\n$//;
+
+      }
+      
+      my @lines_not_to_print;
+      my @lines_to_print;
+      if ($filename eq 'kmc') {
+	  my $ss_param_seen = 0;
+	  my $ss_param_seen2 = 1;
+	  my $ip_tag_seen = 0;
+
+	  for (my $i = 0; $i < scalar @output; $i++) {
+
+
+	      my $output_line = $output[$i];
+
+	      if ($output_line =~ m/^(\.TH\s)([a-zA-Z0-9-]+)(\s.*)/) {
+		  $output_line = $1 . uc($filename) . $3;
+	      }
+	      $output_line =~ s/^(K\-Mer \\- )(kmc)/$2 - $kmc_short_description/;
+	      if ($output_line =~ m/^K\\-Mer Counter/) {
+		  $output_line = $kmc_long_description;
+	      }
+	      
+	      if ($output_line =~ m/^\.SS \"Parameters\:\"/ && ! $ss_param_seen) {
+		  push(@lines_not_to_print, $i);
+		  push(@lines_not_to_print, $i + 1);
+		  push(@lines_not_to_print, $i + 2);
+		  push(@lines_not_to_print, $i + 3);
+
+		  $ss_param_seen = 1;
+		  $ss_param_seen2 = 0;
+
+	      }
+	      elsif ($output_line =~ m/^\.IP/ && ! $ip_tag_seen) {
+		  $output_line = '.SH SYNOPSIS';
+		  if ($output[$i + 2] =~ /^kmc/) {
+		      $output[$i +2] = ".PP\n" . $output[$i + 2];
+		  }
+		  $ip_tag_seen = 1;
+	      }
+	      elsif ($output_line =~ m/^\.SS ""/) {
+		  push(@lines_not_to_print, $i);
+		  push(@lines_not_to_print, $i + 1);
+		  push(@lines_not_to_print, $i + 2);
+		  push(@lines_not_to_print, $i + 3);
+	      }
+	      elsif ($output_line =~ m/^Example:/) {
+		  $output_line = '.SH EXAMPLES';
+		  $output[$i + 2] = ".PP\n" . $output[$i + 2];
+
+	      }
+	      elsif ($output_line =~ m/^\.SS \"Parameters\:\"/ && $ss_param_seen && ! $ss_param_seen2) {
+		  last;
+
+	      }
+
+	      if ( ! grep( /^$i$/, @lines_not_to_print ) ){
+		  #print "$output_line\n";
+		  push(@lines_to_print, $output_line);
+	      }
+
+
+	  }
+      }
+      elsif ($filename eq 'kmc_dump') {
+
+	  my $seen_kmc_start = 0;
+	  my $seen_parameters = 0;
+	  my $seen_options = 0;
+	  my $synopsis_seen = 0;
+	  my @parameters_lines;
+	  my @options_lines;
+	  for (my $i = 0; $i < scalar @output; $i++) {
+	      my $output_line = $output[$i];
+	      if($output_line =~ m/^(\.TH\s)([a-zA-Z0-9-]+)(\s.*)/ ) {
+		  $output_line = $1 . uc($filename) . $3;
+	      }
+	      $output_line =~ s/^(KMC \\- )(kmc_dump)/$2 - $kmc_dump_short_description/;
+	      if ($output_line =~ m/^KMC dump ver\./) {
+		  $output_line = $kmc_dump_long_description;
+		  $seen_kmc_start = 1;
+	      }
+	      if ($output_line =~ m/^kmc/ && $seen_kmc_start == 1 && ! $synopsis_seen) {
+		  $output_line = "\.SH SYNOPSIS\n$output_line";
+		  $synopsis_seen = 1;
+	      }
+	      if ($output_line =~ m/^kmc/ && $seen_kmc_start == 1 && $synopsis_seen) {
+		  push(@lines_not_to_print, $i);
+		  push(@lines_not_to_print, $i + 1);
+
+	      }
+	      if($output_line =~ m/Parameters:/ && ! $seen_parameters) {
+		  push(@parameters_lines, '.PP');
+		  push(@parameters_lines, $output_line);
+		  push(@parameters_lines, '.PP');
+		  push(@parameters_lines, $output[$i + 1]);
+		  push(@lines_not_to_print, $i);
+		  push(@lines_not_to_print, $i + 1);
+		  $seen_parameters = 1;
+	      }
+	      if($output_line =~ m/Parameters:/ && $seen_parameters) {
+		  push(@lines_not_to_print, $i);
+		  push(@lines_not_to_print, $i + 1);
+	      }
+	      if($output_line =~ m/Options:/ && ! $seen_options) {
+		  push(@options_lines, '.SH OPTIONS');
+		  push(@options_lines, $output[$i + 1]);
+		  push(@options_lines, '.PP');
+		  push(@options_lines, $output[$i + 2]);
+		  push(@lines_not_to_print, $i);
+		  push(@lines_not_to_print, $i + 1);
+		  push(@lines_not_to_print, $i + 2);
+		  $seen_options = 1;
+	      }
+	      if($output_line =~ m/Options:/ && $seen_options) {
+		  push(@lines_not_to_print, $i);
+		  push(@lines_not_to_print, $i + 1);
+		  push(@lines_not_to_print, $i + 2);
+	      }
+
+	      if ( ! grep( /^$i$/, @lines_not_to_print ) ){
+		  push(@lines_to_print, $output_line);
+	      }
+
+	  }
+	  for my $line(@options_lines) {
+	      push(@lines_to_print, $line);
+	  }
+	  for my $line(@parameters_lines) {
+	      push(@lines_to_print, $line);
+	  }
+	  
+      }
+      open (my $man_fh, ">", $man_file);
+      for my $line(@lines_to_print) {
+	  print $man_fh "$line\n";
+      }
+      writeAuthorAndCopyright($man_fh,$filename);
+      close($man_fh);
+      print "Manpage creation complete\n";
+    }
+  }
+}
+
+sub writeAuthorAndCopyright {
+
+  my ($man_fh,$filename) = @_;
+
+  my $author_blurb = <<END_OF_AUTHOR_BLURB;
+.SH "AUTHOR"
+.sp
+$filename was originally written by:
+.PP
+Sebastian Deorowicz (sebastian.deorowicz\@polsl.pl)
+.PP
+Marek Kokot
+.PP
+Szymon Grabowski
+.PP
+Agnieszka Debudaj-Grabysz
+END_OF_AUTHOR_BLURB
+
+  print $man_fh "$author_blurb\n";
+
+  my $copyright_blurb = <<'END_OF_C_BLURB';
+.SH "COPYING"
+.sp
+KMC is a free software distributed under GNU GPL3 licence for academic, research, and commercial use.
+END_OF_C_BLURB
+
+  print $man_fh "$copyright_blurb\n";
+
+}
