@@ -2,43 +2,58 @@
 #
 #This makefile was designed for:
 #
-#	1. prepare-pristine-building-environment - 	This rule prepares a Debian Unstable package building machine as a vagrant VM.
-#							It can do this from scratch or from several check-points in that process.
+# 1. prepare-pristine-building-environment - 	This rule prepares a Debian Unstable package building
+#						machine as a vagrant VM. It can do this from scratch
+#						or from several check-points in that process.
 #
-#							It is essential to run it, before any sort of package creation tasks are undertaken.
+#						It is essential to run it, before any sort of package
+#						creation tasks are undertaken.
 #
-#	2. prepare-new-package-for-building -		This rule assumes that you have run the first rule. It is intended to set up a
-#							completely new package building structure in order to create a new Debian package.
+# 2. prepare-new-package-for-building -		This rule assumes that you have run the first rule.
+#						It is intended to set up a completely new package
+#						building structure in order to create a new Debian package.
 #
-#	3. prepare-snp-sites-package-for-building -	This rule assumes that you have run the first rule. It is intended to set up the
-#							snp-sites package building structure in order to update the package when a new release is available.
+# 3. prepare-snp-sites-package-for-building -	This rule assumes that you have run the first rule.
+#						It is intended to set up the snp-sites package building
+#						structure in order to update the package when a new release
+#						is available.
 #
-#							It should not be used to setting up a completely new package.
+#						It should not be used to setting up a completely new package.
 #
-#	4. prepare-fastaq-package-for-building -	This rule assumes that you have run the first rule. It is intended to set up the
-#							fastaq package building structure in order to update the package when a new release is available.
+# 4. prepare-fastaq-package-for-building -	This rule assumes that you have run the first rule.
+#						It is intended to set up the fastaq package building
+#						structure in order to update the package when a new
+#						release is available.
 #
-#							It should not be used to setting up a completely new package.
+#						It should not be used to setting up a completely new package.
 #
-#	5. prepare-kmc-package-for-building -		This rule assumes that you have run the first rule. It is intended to set up the
-#							kmc package building structure in order to update the package when a new release is available.
+# 5. prepare-kmc-package-for-building -		This rule assumes that you have run the first rule.
+#						It is intended to set up the kmc package building
+#						structure in order to update the package when a new
+#						release is available.
 #
-#							It should not be used to setting up a completely new package.
+#						It should not be used to setting up a completely new package.
 #
-#	6. prepare-iva-package-for-building -		This rule assumes that you have run the first rule. It is intended to set up the
-#							iva package building structure in order to update the package when a new release is available.
+# 6. prepare-iva-package-for-building -		This rule assumes that you have run the first rule.
+#						It is intended to set up the iva package building
+#						structure in order to update the package when a new
+#						release is available.
 #
-#							It should not be used to setting up a completely new package.
+#						It should not be used to setting up a completely new package.
 #
 #
-#	To build the packages themselves I prefer to actually login to the Debian VM and do all the editing of the debian files there.
+# To build the packages themselves I prefer to actually login to the Debian VM
+#  and do all the editing of the debian files there.
 #
-#	Main reason for this is that it is a very interactive process and several runs of git-pbuilder will be done until the packager gets it right.
+# Main reason for this is that it is a very interactive process and several
+# runs of git-pbuilder will be done until the packager gets it right.
 #
-#	If the upstream code needs to be patched for some reason, you need to use quilt to keep track of the patches.
+# If the upstream code needs to be patched for some reason, you need to use
+# quilt to keep track of the patches.
 #
-#	Once the package builds, oyu need to run lintian on the .deb file to do quality control of the package. Generally the packge won't be lintian clean
-#	at first build. The process og git-pbuilder starts again.
+# Once the package builds, oyu need to run lintian on the .deb file to do
+# quality control of the package. Generally the packge won't be lintian clean
+# at first build. The process og git-pbuilder starts again.
 
 
 SETUP_HOME=/vagrant/package_builder_setup
