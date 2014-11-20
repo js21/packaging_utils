@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+package Sanger::Debian::Main::UsageToMan;
+
+BEGIN { unshift( @INC, '../lib' ) }
+BEGIN { unshift( @INC, './lib' ) }
+
+use Sanger::Debian::CommandLine::UsageToMan;
+Sanger::Debian::CommandLine::UsageToMan->new(\@ARGV, $0)->run;
