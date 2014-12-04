@@ -1,0 +1,18 @@
+#!/bin/sh -e
+
+echo "Please verify whether this script is obsoleted by gbp-create-remote-repo !"
+
+# This script implements the "Git tips" given here
+#   http://debian-med.alioth.debian.org/docs/policy.html#git-tips
+# Use it with caution since it is less testet
+
+DEBPKGNAME=`dpkg-parsechangelog | awk '/^Source:/ {print $2}'`
+SHORTDESC=`grep "^Description: " debian/control | head -n 1 | sed 's/^Description: //'`
+VCSGIT=`grep "^Vcs-Git: " debian/control | sed -e 's/^Vcs-Git: //' -e 's#git://anonscm.debian.org/#ssh://git.debian.org/git/#'`
+DIRatALIOTH=`echo $VCSGIT | sed -e 's#ssh://git.debian.org/git/#/git/#' -e 's#/[^/]\+\.git##'`
+
+ssh git.debian.org "cd $DIRatALIOTH; ./setup-repository $DEBPKGNAME '$SHORTDESC'"
+git remote add origin $VCSGIT
+git push origin master
+git push --all --set-upstream
+git push --tags

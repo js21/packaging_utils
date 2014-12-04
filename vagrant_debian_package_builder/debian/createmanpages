@@ -1,0 +1,16 @@
+#!/bin/sh
+MANDIR=debian
+mkdir -p $MANDIR
+
+VERSION=`dpkg-parsechangelog | awk '/^Version:/ {print $2}' | sed -e 's/^[0-9]*://' -e 's/-.*//' -e 's/[+~]dfsg$//'`
+
+help2man --no-info --no-discard-stderr --help-option=" " \
+         --name='<optional description of the program>' \
+            --version-string="$VERSION" <programname> > $MANDIR/<programname>.1
+
+cat <<EOT
+Please enhance the help2man output.
+The following web page might be helpful in doing so:
+    http://liw.fi/manpages/
+EOT
+
