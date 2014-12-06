@@ -58,7 +58,7 @@
 # at first build. The process og git-pbuilder starts again.
 
 VAGRANT_HOME=/vagrant
-SETUP_HOME=/vagrant/package_builder_setup
+SETUP_HOME=${VAGRANT_HOME}/package_builder_setup
 
 BASE_PBUILDER_DIR=/var/cache/pbuilder
 HOOK_DIR= ${BASE_PBUILDER_DIR}/hook.d
@@ -71,8 +71,8 @@ ROOT_PBRC=/root/.pbuilderrc
 HOME_PBRC=~/.pbuilderrc
 
 NEW_PROJECT_GIT=automated-vagrant-build.git
-NEW_PROJECT_DIR=/vagrant/automated-vagrant-build
-DEBIAN_DIR=/vagrant/debian
+NEW_PROJECT_DIR=${VAGRANT_HOME}/automated-vagrant-build
+DEBIAN_DIR=${VAGRANT_HOME}/debian
 USER_EMAIL='j.s.soares@gmail.com'
 USER_NAME='Jorge Soares'
 
