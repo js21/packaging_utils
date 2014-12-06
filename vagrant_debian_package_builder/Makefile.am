@@ -10,6 +10,8 @@
 #						creation tasks are undertaken.
 #
 # 2. prepare-new-package-for-building -		This rule assumes that you have run the first rule.
+#						It also assumes that you have you Debian Alioth account
+#						setup.
 #						It is intended to set up a completely new package
 #						building structure in order to create a new Debian package.
 #
@@ -51,11 +53,11 @@
 # If the upstream code needs to be patched for some reason, you need to use
 # quilt to keep track of the patches.
 #
-# Once the package builds, oyu need to run lintian on the .deb file to do
+# Once the package builds, you need to run lintian on the .deb file to do
 # quality control of the package. Generally the packge won't be lintian clean
 # at first build. The process og git-pbuilder starts again.
 
-
+VAGRANT_HOME=/vagrant
 SETUP_HOME=/vagrant/package_builder_setup
 
 BASE_PBUILDER_DIR=/var/cache/pbuilder
@@ -68,12 +70,20 @@ MAIN_PBRC=/etc/pbuilderrc
 ROOT_PBRC=/root/.pbuilderrc
 HOME_PBRC=~/.pbuilderrc
 
+NEW_PROJECT_GIT=automated-vagrant-build.git
+NEW_PROJECT_DIR=/vagrant/automated-vagrant-build
+DEBIAN_DIR=/vagrant/debian
+USER_EMAIL='j.s.soares@gmail.com'
+USER_NAME='Jorge Soares'
 
 
 prepare-pristine-building-environment:
 	vagrant up
-	vagrant ssh -c "if [ ! -e ~/.bash_aliases ]; then echo 'export LANG=en_GB.UTF-8 && export LC_CTYPE=en_GB.UTF-8 && export LC_MESSAGES=en_GB.UTF-8 && export LC_COLLATE=en_GB.UTF-8 && export LANGUAGE=en_GB.UTF-8;' >> ~/.bash_aliases; fi"
-	vagrant reload	
+	vagrant provision
+	vagrant ssh -c "if [ ! -e ~/.bash_aliases ]; then echo 'export LANG=en_GB.UTF-8 && export LANGUAGE=en_GB.UTF-8;' >> ~/.bash_aliases; fi"
+	vagrant ssh -c "sudo cp ${SETUP_HOME}/sources.list /etc/apt/"
+	vagrant ssh -c "sudo apt-get update"
+	vagrant reload
 	vagrant ssh -c "sudo apt-get install build-essential"
 	vagrant ssh -c 'locale_list=$$(locale -a); if [[ ! $$locale_list =~ en_GB.utf8 ]]; then sudo dpkg-reconfigure locales; fi'
 	vagrant ssh -c "sudo apt-get update"
@@ -93,11 +103,22 @@ prepare-pristine-building-environment:
 	vagrant ssh -c "if [ ! -e ${HOOK_DIR}/C10shell ]; then sudo cp ${SETUP_HOME}/C10shell ${HOOK_DIR} && sudo chmod a+x ${HOOK_DIR}/C10shell; fi"
 	vagrant halt
 
-prepare-new-package-for-building:
-	vagrant up
 
+#Once in the debian git machine, you need ot run these manually
+#umask 002 && cd /git/debian-med
+#mkdir ${NEW_PROJECT_GIT} && cd ${NEW_PROJECT_GIT} && git --bare init --shared && exit
 
+prepare-new-package-for-building: setup-debian-git
+	vagrant ssh -c "git config --global user.email ${USER_EMAIL} && git config --global user.name ${USER_NAME}"
+	vagrant ssh -c "cd ${VAGRANT_HOME} && git clone ssh://git.debian.org/git/debian-med/${NEW_PROJECT_GIT}"
+	vagrant ssh -c "cp -r ${DEBIAN_DIR} ${NEW_PROJECT_DIR}"
+	vagrant ssh -c "cd ${NEW_PROJECT_DIR} && git add debian/ && git commit -m 'initial commit' && git push --all"
 	vagrant halt
+
+setup-debian-git:
+	vagrant up
+	vagrant ssh -c "cp ${SETUP_HOME}/ssh_js21/* .ssh/"
+	vagrant ssh -c "ssh jssoares-guest@git.debian.org"
 
 prepare-snp-sites-package-for-building:
 	vagrant up

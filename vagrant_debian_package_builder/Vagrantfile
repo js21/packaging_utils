@@ -54,8 +54,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   #   # Don't boot with headless mode
   #   vb.gui = true
   #
-  #   # Use VBoxManage to customize the VM. For example to change memory:
+     #   # Use VBoxManage to customize the VM. For example to change memory:
      vb.customize ["modifyvm", :id, "--memory", "4100"]
+     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
    end
   
   # View the documentation for the provider you're using for more
@@ -80,19 +81,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # # }
   #
 
-  # Install the module for handling apt
-   config.vm.provision :shell do |shell|
-     shell.inline = "sed -i 's/^mesg n$/tty -s \&\& mesg n/g' /root/.profile;"
-     shell.inline = "if [ ! -d /etc/puppet/modules/apt ]; then
-                  mkdir -p /etc/puppet/modules;
-                  puppet module install puppetlabs/apt;
-                  fi"
-  end
 
-  config.vm.provision "puppet" do |puppet|
-     puppet.manifests_path = "manifests"
-     puppet.manifest_file  = "debianbvm.pp"
-  end
+   
+  # Install the module for handling apt
+  # config.vm.provision :shell do |shell|
+   #  shell.inline = "sed -i 's/^mesg n$/tty -s \&\& mesg n/g' /root/.profile;"
+    # shell.inline = "if [ ! -d /etc/puppet/modules/apt ]; then mkdir -p /etc/puppet/modules; puppet module install puppetlabs/apt; fi"
+  #end
+
+   #config.vm.provision "puppet" do |puppet|
+    # puppet.manifests_path = "manifests"
+    # puppet.manifest_file  = "debianbvm.pp"
+  #end
+
 
   # Enable provisioning with chef solo, specifying a cookbooks path, roles
   # path, and data_bags path (all relative to this Vagrantfile), and adding
